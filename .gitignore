@@ -1,0 +1,28 @@
+# Entorno virtual y dependencias
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos temporales de Excel
+~$*.xlsx
+~$*.xls
+
+# Carpetas de salida operativa (personalizables)
+REVISADOS/*
+!REVISADOS/.gitkeep
+LOGS/*
+!LOGS/.gitkeep
+
+# Cobertura y pruebas
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Configuración de IDEs
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditor de Excel V2 — Motor Híbrido</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="mesh-background"></div>
+
+    <div class="app-container">
+        <!-- Encabezado Principal -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-badge" title="Auditor de Excel V2 — Motor Híbrido">
+                    <svg class="logo-svg" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="3" width="32" height="30" rx="6" fill="url(#excelGrad)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                        <path d="M12 9v18M20 9v18M28 9v18" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="2 2"/>
+                        <path d="M4 15h28M4 21h28" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+                        <rect x="5" y="8" width="13" height="15" rx="3" fill="#107C41" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
+                        <path d="M8.5 11.5L14.5 19.5M14.5 11.5L8.5 19.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="26" cy="22" r="6.5" fill="#6366F1" stroke="#FFFFFF" stroke-width="1.5"/>
+                        <path d="M23.5 22L25.2 23.8L28.8 20.2" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="excelGrad" x1="2" y1="3" x2="34" y2="33" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#1e293b"/>
+                                <stop offset="1" stop-color="#0f172a"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="version-tag">v2.0 Híbrido</span>
+                </div>
+                <div>
+                    <h1>Auditor de Excel</h1>
+                    <p class="subtitle">Evaluación por Rúbrica Declarativa (0-100 pts) y Plantilla Espejo</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="icon-btn" id="btn-theme-toggle" title="Cambiar tema Claro / Oscuro" aria-label="Cambiar tema">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <button type="button" class="exit-btn" id="btn-exit" title="Apagar el servidor local">
+                    <span>⏻</span> Apagar
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenedor Principal de Tarjetas -->
+        <main class="main-content">
+            <!-- Tarjeta 1: Configuración de Auditoría -->
+            <section class="card glass-card">
+                <div class="card-header">
+                    <h2><span class="step-num">1</span> Modo de Evaluación</h2>
+                </div>
+
+                <!-- Selector de Modo A / Modo B -->
+                <div class="mode-selector-container">
+                    <div class="segmented-control" role="radiogroup" aria-label="Modo de Evaluación">
+                        <button type="button" class="segment-btn active" id="btn-modo-b" data-mode="modo_b_rubrica" role="radio" aria-checked="true">
+                            <span class="mode-badge-rec">Recomendado</span>
+                            <span class="mode-title">🎯 Modo B: Rúbrica Inteligente</span>
+                            <span class="mode-desc">Evaluación declarativa por criterios (0-100 pts), tolerancias y feedback visual</span>
+                        </button>
+                        <button type="button" class="segment-btn" id="btn-modo-a" data-mode="modo_a_espejo" role="radio" aria-checked="false">
+                            <span class="mode-title">🔍 Modo A: Plantilla Espejo</span>
+                            <span class="mode-desc">Comparación exacta celda a celda + detección de filas desplazadas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-header" style="margin-top: 1.5rem;">
+                    <h2><span class="step-num">2</span> Selección de Archivos</h2>
+                    <button type="button" class="secondary-btn" id="btn-gen-template" title="Crear un archivo Excel de ejemplo con hoja _RUBRICA">
+                        <span>✨</span> Generar Plantilla de Rúbrica (.xlsx)
+                    </button>
+                </div>
+
+                <!-- Selector de Plantilla y Trabajos -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="plantilla-path">Plantilla de Referencia (.xlsx)</label>
+                        <div class="input-action-row">
+                            <input type="text" id="plantilla-path" class="path-input" placeholder="Selecciona el archivo de plantilla..." readonly>
+                            <button type="button" class="browse-icon-btn" id="btn-browse-file" title="Seleccionar archivo de Plantilla (.xlsx)" aria-label="Seleccionar archivo">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <circle cx="11.5" cy="14.5" r="2.5"></circle>
+                                    <line x1="13.3" y1="16.3" x2="16" y2="19"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <small class="field-hint" id="plantilla-hint">Busca hoja <code>_RUBRICA</code> o archivo <code>.rubrica.json</code></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="trabajos-path">Carpeta con Trabajos de Estudiantes</label>
+                        <div class="input-action-row">
+                            <input type="text" id="trabajos-path" class="path-input" placeholder="Selecciona la carpeta de trabajos..." readonly>
+                            <button type="button" class="browse-icon-btn" id="btn-browse-folder" title="Seleccionar carpeta de Trabajos de Estudiantes" aria-label="Seleccionar carpeta">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="11.5" cy="14" r="2"></circle>
+                                    <line x1="13" y1="15.5" x2="15.5" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <small class="field-hint" id="trabajos-hint">Carpeta con archivos <code>.xlsx</code> a evaluar</small>
+                    </div>
+                </div>
+
+                <!-- Parámetros adicionales: Sección y Fecha -->
+                <div class="form-row-compact">
+                    <div class="form-group compact">
+                        <label for="input-seccion">Sección / Grupo</label>
+                        <input type="text" id="input-seccion" placeholder="Ej: 11-2B">
+                    </div>
+                    <div class="form-group compact">
+                        <label for="input-fecha">Fecha de Reporte</label>
+                        <input type="text" id="input-fecha" placeholder="dd/mm/aaaa">
+                    </div>
+                </div>
+
+                <!-- Pre-chequeo e Inspector de Rúbrica (Modo B) -->
+                <div class="rubric-preview-card" id="rubric-preview-container" style="display: none;">
+                    <div class="rubric-preview-header">
+                        <div class="rubric-title-wrap">
+                            <span class="rubric-icon">📋</span>
+                            <span class="rubric-title">Pre-chequeo de Rúbrica Detectada</span>
+                            <span class="rubric-source-badge" id="rubric-source-badge">Hoja _RUBRICA</span>
+                        </div>
+                        <div class="points-badge-wrap">
+                            <span class="points-badge" id="rubric-total-badge">100.0 pts</span>
+                        </div>
+                    </div>
+                    <div class="rubric-table-wrapper">
+                        <table class="rubric-table" id="rubric-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Criterio</th>
+                                    <th>Hoja</th>
+                                    <th>Rango</th>
+                                    <th>Tipo Validación</th>
+                                    <th>Pts</th>
+                                    <th>Obligatorio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rubric-table-body">
+                                <!-- Filas generadas dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="rubric-status-alert" id="rubric-status-alert" style="display: none;"></div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="actions-container">
+                    <button type="button" class="primary-btn" id="btn-run">
+                        <span class="btn-icon">▶</span> Iniciar Auditoría
+                    </button>
+                    <button type="button" class="danger-btn" id="btn-stop" style="display: none;">
+                        <span class="btn-icon">⏹</span> Cancelar
+                    </button>
+                </div>
+            </section>
+
+            <!-- Tarjeta 2: Consola de Ejecución y Progreso en Vivo -->
+            <section class="card glass-card console-card" id="console-section" style="display: none;">
+                <div class="console-header">
+                    <div class="console-status-group">
+                        <span class="pulse-dot"></span>
+                        <span class="console-title" id="console-status-text">Ejecutando auditoría...</span>
+                    </div>
+                    <div class="console-controls">
+                        <button type="button" class="text-btn" id="btn-clear-console">Limpiar Consola</button>
+                    </div>
+                </div>
+
+                <!-- Barra de Progreso Interactiva -->
+                <div class="progress-bar-container" id="progress-container">
+                    <div class="progress-info-row">
+                        <span id="progress-student-text">Procesando archivos...</span>
+                        <span id="progress-pct-text">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Cuerpo de Logs con scroll automático -->
+                <div class="terminal-body" id="terminal-body">
+                    <div class="terminal-line system">Listo para auditar. Presiona 'Iniciar Auditoría'.</div>
+                </div>
+
+                <!-- Resumen de Resultados al Finalizar -->
+                <div class="results-summary-card" id="results-summary" style="display: none;">
+                    <h3>📊 Resumen de Calificaciones</h3>
+                    <div class="summary-stats-grid" id="summary-stats-grid">
+                        <!-- Estadísticas Rápidas -->
+                    </div>
+                    <div class="results-table-wrap">
+                        <table class="results-table" id="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Nota Final</th>
+                                    <th>Estado</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="results-actions">
+                        <span class="results-note">Los archivos calificados se guardaron en la carpeta <code>/REVISADOS</code></span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Pie de Página -->
+        <footer class="app-footer">
+            <span>APP_REVISA_EXCEL_V2 — Motor Híbrido Autónomo (100% Offline)</span>
+        </footer>
+    </div>
+
+    <!-- Toast de Notificaciones -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Modal de Salida / Servidor Apagado (Alto Contraste) -->
+    <div class="shutdown-modal-overlay" id="shutdown-modal" style="display: none;">
+        <div class="shutdown-modal-card">
+            <div class="shutdown-icon-wrap">⏻</div>
+            <h2>Servidor Local Apagado</h2>
+            <p class="shutdown-desc">El proceso del servidor local se ha detenido exitosamente.</p>
+            <p class="shutdown-subdesc">Ya puedes cerrar esta pestaña o ventana del navegador con total seguridad.</p>
+            <button type="button" class="primary-btn shutdown-close-btn" id="btn-close-window">
+                Cerrar Pestaña
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
