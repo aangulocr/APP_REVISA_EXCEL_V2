@@ -217,6 +217,33 @@ class MirrorEvaluator(BaseEvaluator):
             ws_p = wb_p[nom_p]
             ws_e = wb_e[nom_e]
 
+            # 0. Detección de Hojas de Gráfico independientes (Chartsheet)
+            is_chartsheet_p = not hasattr(ws_p, "max_row") or not hasattr(ws_p, "cell")
+            is_chartsheet_e = not hasattr(ws_e, "max_row") or not hasattr(ws_e, "cell")
+
+            if is_chartsheet_p or is_chartsheet_e:
+                if is_chartsheet_p and is_chartsheet_e:
+                    res_hoja.aciertos = 1
+                    res_hoja.errores = 0
+                    res_hoja.porcentaje = 100.0
+                    res_hoja.detalles.append(f"Hoja de gráfico '{nom_p}' verificada correctamente como ChartSheet independiente.")
+                    total_aciertos_general += 1
+                elif is_chartsheet_p and not is_chartsheet_e:
+                    res_hoja.aciertos = 0
+                    res_hoja.errores = 1
+                    res_hoja.porcentaje = 0.0
+                    res_hoja.detalles.append(f"La hoja '{nom_p}' debe ser una Hoja de Gráfico independiente (Mover Gráfico > Hoja nueva), pero se encontró como hoja normal.")
+                    total_errores_general += 1
+                else:
+                    res_hoja.aciertos = 0
+                    res_hoja.errores = 1
+                    res_hoja.porcentaje = 0.0
+                    res_hoja.detalles.append(f"La hoja '{nom_e}' es una Hoja de Gráfico independiente cuando se esperaba una hoja de cálculo estándar.")
+                    total_errores_general += 1
+
+                res_est.detalle_hojas.append(res_hoja)
+                continue
+
             # 1. Detector de Desplazamiento de Filas/Columnas
             offset_detectado, confianza, msg_shift = detectar_desplazamiento(ws_p, ws_e)
             if offset_detectado and msg_shift:

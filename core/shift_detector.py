@@ -28,6 +28,12 @@ def detectar_desplazamiento(
     if ws_plantilla is None or ws_estudiante is None:
         return None, 0.0, ""
 
+    # Hojas de gráfico independientes (Chartsheet) no poseen celdas ni filas
+    if not hasattr(ws_plantilla, "max_row") or not hasattr(ws_estudiante, "max_row"):
+        return None, 0.0, ""
+    if not hasattr(ws_plantilla, "cell") or not hasattr(ws_estudiante, "cell"):
+        return None, 0.0, ""
+
     # Recolectar celdas de muestra no vacías de la plantilla
     muestras = []
     max_r = min(ws_plantilla.max_row or 1, max_muestra_filas)

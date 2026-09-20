@@ -42,3 +42,16 @@ def test_shift_detector_fila_desplazada():
     assert offset == (1, 0)
     assert conf >= 0.70
     assert "+1 fila(s) abajo" in msg
+
+
+def test_shift_detector_chartsheet():
+    wb_p = openpyxl.Workbook()
+    cs_p = wb_p.create_chartsheet(title="Grafico1")
+    wb_e = openpyxl.Workbook()
+    cs_e = wb_e.create_chartsheet(title="Grafico1")
+
+    # No debe fallar con AttributeError: 'Chartsheet' object has no attribute 'max_row'
+    offset, conf, msg = detectar_desplazamiento(cs_p, cs_e)
+    assert offset is None
+    assert msg == ""
+
