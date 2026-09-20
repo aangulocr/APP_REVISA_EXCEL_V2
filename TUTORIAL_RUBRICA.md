@@ -195,6 +195,25 @@ En la hoja `_RUBRICA` se define así:
 2. **`"referencias": ["D3", "C3", "E3"]`:** Comprueba que evalúe la celda condicional `D3` y calcule con `C3` y `E3`.
 3. **`"contiene": ["JEFE", "5%/0.05"]`:** Valida que compare contra el texto `"JEFE"` y que aplique el porcentaje `5%` o `0.05`.
 
+
+#### Caso 3: Varias Filas con Múltiples Puestos y Descuentos (`SI.CONJUNTO` o `SI` anidado)
+> **Ejercicio:** *"En la columna Descuento (rango `F3:F25`), aplique la función `SI.CONJUNTO` (o `SI`): si el puesto en la columna `D` es 'JEFE' aplica un 5% de descuento, si es 'SUPERVISOR' un 4% y si es 'OPERARIO' un 2% sobre el subtotal (`C * E`)."*
+
+En la hoja `_RUBRICA` se define de forma limpia y directa:
+
+| ID | CRITERIO | HOJA | RANGO | TIPO_VALIDACION | PARAMETROS | PUNTOS | OBLIGATORIO |
+| :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
+| **CRIT_06** | Calcular descuento por puesto en todo el rango con SI.CONJUNTO | `Ventas` | `F3:F25` | `formula` | `{"funciones": ["SI.CONJUNTO"], "referencias": ["D", "C", "E"], "contiene": ["JEFE", "SUPERVISOR", "OPERARIO", "5%/0.05", "4%/0.04", "2%/0.02"]}` | 20 | `SI` |
+
+**Respuestas a dudas frecuentes sobre este caso:**
+1. **¿Se tienen que poner todas las celdas en `referencias` (D3, D4, D5...)?**
+   - **NO.** Sería tedioso e innecesario escribir decenas de celdas.
+   - **Forma recomendada:** Pones las letras de las columnas involucradas: `["D", "C", "E"]`. El sistema verificará que cada fila use sus columnas correspondientes.
+   - **Forma alternativa:** Pones solo la primera fila: `["D3", "C3", "E3"]`. El motor de auditoría reconoce el rango `F3:F25` y adapta automáticamente la fila para cada celda (`D4, C4, E4` en la fila 4; `D5, C5, E5` en la fila 5, etc.).
+2. **¿Se tienen que poner todos los puestos en `contiene`?**
+   - **SÍ.** En Excel, la fórmula completa escrita en la primera celda contiene todas las condiciones (`JEFE`, `SUPERVISOR`, `OPERARIO`) y se arrastra a toda la columna. Por eso, en cada fila deben figurar los 3 puestos evaluados.
+   - Si además agregas los porcentajes con barra (`5%/0.05`, `4%/0.04`, `2%/0.02`), el sistema validará que el alumno no se haya equivocado de porcentaje y aceptará tanto si escribió el signo `%` como si usó decimales (`0.05`).
+
 ---
 
 ## 6. Reglas de Oro para la Hoja `_RUBRICA`

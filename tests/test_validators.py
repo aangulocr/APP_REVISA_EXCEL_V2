@@ -234,3 +234,51 @@ def test_combined_operations_and_ifs():
     assert res2.puntos_obtenidos == 10.0
 
 
+def test_multirow_si_conjunto_job_titles_discounts():
+    from core.validators.formula_validator import FormulaValidator
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws["F3"] = '=SI.CONJUNTO(D3="JEFE", C3*E3 - C3*E3*5%, D3="SUPERVISOR", C3*E3 - C3*E3*4%, D3="OPERARIO", C3*E3 - C3*E3*2%)'
+    ws["F4"] = '=SI.CONJUNTO(D4="JEFE", C4*E4 - C4*E4*5%, D4="SUPERVISOR", C4*E4 - C4*E4*4%, D4="OPERARIO", C4*E4 - C4*E4*2%)'
+    ws["F5"] = '=SI.CONJUNTO(D5="JEFE", C5*E5 - C5*E5*5%, D5="SUPERVISOR", C5*E5 - C5*E5*4%, D5="OPERARIO", C5*E5 - C5*E5*2%)'
+
+    val = FormulaValidator()
+
+    # Test con Opción A: Letras de columna
+    crit_cols = CriterioRubrica(
+        id="C12",
+        criterio="Descuento por puesto en varias filas (letras de columna)",
+        hoja="Sheet",
+        rango="F3:F5",
+        tipo_validacion="formula",
+        parametros={
+            "funciones": ["SI.CONJUNTO"],
+            "referencias": ["D", "C", "E"],
+            "contiene": ["JEFE", "SUPERVISOR", "OPERARIO", "5%/0.05", "4%/0.04", "2%/0.02"]
+        },
+        puntos=20
+    )
+    res_cols = val.validar(ws, crit_cols)
+    assert res_cols.aprobado is True
+    assert res_cols.puntos_obtenidos == 20.0
+
+    # Test con Opción B: Celdas de la primera fila (adaptación relativa)
+    crit_cells = CriterioRubrica(
+        id="C13",
+        criterio="Descuento por puesto en varias filas (primera fila relativa)",
+        hoja="Sheet",
+        rango="F3:F5",
+        tipo_validacion="formula",
+        parametros={
+            "funciones": ["SI.CONJUNTO"],
+            "referencias": ["D3", "C3", "E3"],
+            "contiene": ["JEFE", "SUPERVISOR", "OPERARIO", "5%/0.05", "4%/0.04", "2%/0.02"]
+        },
+        puntos=20
+    )
+    res_cells = val.validar(ws, crit_cells)
+    assert res_cells.aprobado is True
+    assert res_cells.puntos_obtenidos == 20.0
+
+
+

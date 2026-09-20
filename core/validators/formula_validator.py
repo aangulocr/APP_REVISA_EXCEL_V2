@@ -103,10 +103,20 @@ class FormulaValidator(BaseValidator):
             refs_req = [refs_req]
         refs_requeridas_norm = [normalizar_referencia(r) for r in refs_req if r]
 
+        # Obtener primera fila del rango evaluado para relatividad
+        primera_fila = None
+        if coords:
+            m_primera = re.match(r'([A-Z]+)(\d+)', coords[0])
+            if m_primera:
+                primera_fila = int(m_primera.group(2))
+
         fallos: List[str] = []
         celdas_erroneas: List[str] = []
 
         for coord in coords:
+            m_coord = re.match(r'([A-Z]+)(\d+)', coord)
+            current_row = int(m_coord.group(2)) if m_coord else None
+
             celda = ws_estudiante[coord] if ws_estudiante else None
             valor = celda.value if celda is not None else None
 
@@ -137,12 +147,31 @@ class FormulaValidator(BaseValidator):
                     fallos.append(f"Celda {coord}: utiliza función no permitida ({', '.join(encontradas_prohibidas)})")
                     continue
 
-            # 4. Verificar referencias
+            # 4. Verificar referencias (soporta columnas 'D', celdas relativas 'D3' -> 'D4', y fijas '$H$1')
             if refs_requeridas_norm:
                 refs_faltantes = []
                 for ref_esperada in refs_requeridas_norm:
-                    if ref_esperada not in formula_norm:
+                    coincide_ref = False
+                    # A. Coincidencia directa (letra de columna o celda absoluta)
+                    if ref_esperada in formula_norm:
+                        coincide_ref = True
+                    # B. Si ref_esperada es celda (ej: 'D3') y estamos evaluando otra fila (ej: fila 4)
+                    elif current_row is not None:
+                        m_ref = re.match(r'([A-Z]+)(\d+)', ref_esperada)
+                        if m_ref:
+                            col_ref = m_ref.group(1)
+                            fila_ref = int(m_ref.group(2))
+                            if primera_fila is not None:
+                                delta = current_row - primera_fila
+                                target_fila = fila_ref + delta
+                                if f"{col_ref}{target_fila}" in formula_norm:
+                                    coincide_ref = True
+                            if f"{col_ref}{current_row}" in formula_norm:
+                                coincide_ref = True
+
+                    if not coincide_ref:
                         refs_faltantes.append(ref_esperada)
+
                 if refs_faltantes:
                     celdas_erroneas.append(coord)
                     fallos.append(f"Celda {coord}: no referencia el rango/celda '{', '.join(refs_faltantes)}'")
