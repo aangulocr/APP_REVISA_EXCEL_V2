@@ -163,6 +163,8 @@ def parsear_rubrica_desde_hoja(ws) -> Tuple[List[CriterioRubrica], float, List[s
             tipo_str = "celdas_combinadas"
         elif tipo_str in ("validacion", "lista", "val_datos"):
             tipo_str = "validacion_datos"
+        elif tipo_str in ("grafico", "graficos", "graficodinamico", "grafico_dinamico", "chart", "chartsheet", "hojagrafico", "hoja_grafico"):
+            tipo_str = "grafico_dinamico"
 
         params_raw = ws.cell(row=r, column=col_map.get("parametros", 6)).value if "parametros" in col_map else "{}"
         params_dict = _limpiar_json_str(params_raw)

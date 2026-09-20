@@ -167,3 +167,31 @@ def test_structure_validator_merged():
         puntos=10
     )
     assert val.validar(ws, crit).aprobado is True
+
+
+def test_chart_validator():
+    from core.validators.chart_validator import ChartValidator
+    wb = openpyxl.Workbook()
+    cs = wb.create_chartsheet(title="Gráfico Ventas x Vendedor")
+
+    val = ChartValidator()
+    crit_chartsheet = CriterioRubrica(
+        id="C9",
+        criterio="Mover gráfico a hoja nueva Gráfico Ventas x Vendedor",
+        hoja="Gráfico Ventas x Vendedor",
+        rango="A1",
+        tipo_validacion="grafico_dinamico",
+        parametros={"tipo_hoja": "chartsheet", "origen": "Resumen_Ventas"},
+        puntos=20
+    )
+    res = val.validar(cs, crit_chartsheet)
+    assert res.aprobado is True
+    assert res.puntos_obtenidos == 20.0
+    assert "ChartSheet" in res.mensaje_detalle
+
+    # Si se pasa una hoja normal cuando se requería chartsheet
+    ws_normal = wb.active
+    res_err = val.validar(ws_normal, crit_chartsheet)
+    assert res_err.aprobado is False
+    assert res_err.puntos_obtenidos == 0.0
+

@@ -159,6 +159,7 @@ VALIDADORES_DISPONIBLES = [
     "formato_numero",
     "estilo_visual_flexible",
     "tabla_dinamica",
+    "grafico_dinamico",
     "celdas_combinadas",
     "validacion_datos",
 ]

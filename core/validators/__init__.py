@@ -11,6 +11,7 @@ from core.validators.format_validator import FormatValidator
 from core.validators.style_validator import StyleValidator
 from core.validators.structure_validator import StructureValidator
 from core.validators.pivot_validator import PivotValidator
+from core.validators.chart_validator import ChartValidator
 
 # Mapeo de identificadores de validación a sus clases
 _REGISTRO_VALIDADORES: Dict[str, Type[BaseValidator]] = {
@@ -22,6 +23,9 @@ _REGISTRO_VALIDADORES: Dict[str, Type[BaseValidator]] = {
     "celdas_combinadas": StructureValidator,
     "validacion_datos": StructureValidator,
     "tabla_dinamica": PivotValidator,
+    "grafico_dinamico": ChartValidator,
+    "hoja_grafico": ChartValidator,
+    "grafico": ChartValidator,
 }
 
 
@@ -43,5 +47,6 @@ __all__ = [
     "StyleValidator",
     "StructureValidator",
     "PivotValidator",
+    "ChartValidator",
     "obtener_validador",
 ]

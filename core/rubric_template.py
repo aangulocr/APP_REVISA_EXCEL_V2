@@ -272,7 +272,19 @@ def generar_plantilla_rubrica(ruta_salida: str = None) -> str:
                     max_len = len(val_str)
             ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
-    # Guardar libro
-    wb.save(ruta_salida)
+    # Guardar libro con manejo seguro de archivos abiertos en Excel
+    try:
+        wb.save(ruta_salida)
+    except PermissionError:
+        base, ext = os.path.splitext(ruta_salida)
+        for i in range(1, 100):
+            alt_ruta = f"{base}_{i}{ext}"
+            try:
+                wb.save(alt_ruta)
+                ruta_salida = alt_ruta
+                break
+            except PermissionError:
+                continue
+
     wb.close()
     return ruta_salida

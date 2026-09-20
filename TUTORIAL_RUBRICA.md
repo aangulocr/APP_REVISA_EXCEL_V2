@@ -94,9 +94,31 @@ Puedes combinar cualquiera de estas claves en la columna **`PARAMETROS`**:
 | `formato` / `formato_numero` | Valida formato de Moneda, Porcentaje, Fecha, etc. | `{"formato": "moneda"}` o `{"formato": "porcentaje"}` |
 | `estilo` / `estilo_visual_flexible` | Valida negrita, bordes o color de fondo | `{"requiere_negrita": true, "requiere_bordes": true}` |
 | `tabla_dinamica` | Valida existencia y campos de tablas dinámicas | `{"campos_fila": ["Categoria"], "campos_valor": ["Total"]}` |
+| `grafico_dinamico` | Valida Gráfico Dinámico y Hoja de Gráfico (`ChartSheet`) movida | `{"tipo_hoja": "chartsheet", "origen": "Resumen_Ventas"}` |
 | `tabla` | Valida objeto Tabla oficial y su nombre | `{"nombre": "TablaVentas"}` |
 | `celdas_combinadas` | Valida que el rango esté combinado | `{}` |
 | `validacion_datos` | Valida listas desplegables o reglas de celda | `{"tipo": "list"}` |
+
+---
+
+### Ejemplo Específico: Gráfico Dinámico movido a Hoja Nueva (`ChartSheet`)
+
+Cuando el ejercicio pide:
+> *"Cree un gráfico dinámico a partir de la tabla dinámica de la hoja `Resumen_Ventas`, y desde el menú Análisis de gráfico dinámico > Acciones > Mover gráfico, muévalo a una **hoja nueva** llamada `Gráfico Ventas x Vendedor`."*
+
+Se define en la hoja `_RUBRICA` de la siguiente forma:
+
+| ID | CRITERIO | HOJA | RANGO | TIPO_VALIDACION | PARAMETROS | PUNTOS | OBLIGATORIO |
+| :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
+| **CRIT_03** | Insertar Gráfico Dinámico y mover a hoja nueva Gráfico Ventas x Vendedor | `Gráfico Ventas x Vendedor` | `-` | `grafico_dinamico` | `{"tipo_hoja": "chartsheet", "origen": "Resumen_Ventas"}` | 20 | `SI` |
+
+**Detalles técnicos:**
+- **`HOJA`:** Debe ser exactamente el nombre de la pestaña asignada: `Gráfico Ventas x Vendedor`.
+- **`RANGO`:** Se coloca `-` o `A1` (en las Hojas de Gráfico no hay celdas individuales).
+- **`TIPO_VALIDACION`:** `grafico_dinamico` (o `hoja_grafico`).
+- **`PARAMETROS`:**
+  - `"tipo_hoja": "chartsheet"`: Exige que el alumno haya usado la opción *Mover Gráfico > Hoja nueva*, y no que simplemente haya copiado el gráfico en una celda de una hoja normal.
+  - `"origen": "Resumen_Ventas"`: Especifica la hoja de la Tabla Dinámica de origen.
 
 ---
 
