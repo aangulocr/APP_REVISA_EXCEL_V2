@@ -205,6 +205,29 @@ def emparejar_hojas(
             except Exception:
                 pass
 
+    # 6. Emparejamiento de Hojas de Gráfico (ChartSheets) restantes
+    if wb_plantilla is not None and wb_estudiante is not None:
+        for p in plantilla_req:
+            if p in mapa:
+                continue
+            ws_p = wb_plantilla[p] if p in wb_plantilla.sheetnames else None
+            es_cs_p = ws_p is not None and not hasattr(ws_p, "max_row")
+            if es_cs_p or "grafico" in normalizar_texto(p):
+                candidatos_cs = []
+                for e in disponibles:
+                    ws_e = wb_estudiante[e] if e in wb_estudiante.sheetnames else None
+                    es_cs_e = ws_e is not None and not hasattr(ws_e, "max_row")
+                    if es_cs_e or "grafico" in normalizar_texto(e):
+                        candidatos_cs.append(e)
+                if candidatos_cs:
+                    e_sel = candidatos_cs[0]
+                    mapa[p] = {
+                        "hoja_estudiante": e_sel,
+                        "metodo": "chartsheet_fallback",
+                        "score": 0.75
+                    }
+                    disponibles.remove(e_sel)
+
     # Hojas no encontradas
     for p in plantilla_req:
         if p not in mapa:

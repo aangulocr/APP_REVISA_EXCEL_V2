@@ -204,18 +204,42 @@ class MirrorEvaluator(BaseEvaluator):
         for nom_p in hojas_p:
             info_m = mapa_hojas.get(nom_p, {})
             nom_e = info_m.get("hoja_estudiante")
-
             res_hoja = ResultadoHoja(hoja=nom_p, hoja_estudiante=nom_e)
 
-            if not nom_e or nom_e not in wb_e.sheetnames:
+            ws_p = wb_p[nom_p] if nom_p in wb_p.sheetnames else None
+            ws_e = wb_e[nom_e] if nom_e and nom_e in wb_e.sheetnames else None
+
+            if not nom_e or not ws_e:
                 res_hoja.errores = 1
-                res_hoja.detalles.append(f"Hoja '{nom_p}' no encontrada en el trabajo del estudiante.")
+                res_hoja.aciertos = 0
+                res_hoja.porcentaje = 0.0
+
+                # Si la hoja requerida era un Chartsheet, dar retroalimentación pedagógica clara
+                is_chartsheet_req = (ws_p is not None and not hasattr(ws_p, "max_row")) or ("grafico" in nom_p.lower())
+                if is_chartsheet_req:
+                    # Verificar si el estudiante dejó gráficos incrustados en hojas normales
+                    graficos_incrustados = []
+                    for h_nom in wb_e.sheetnames:
+                        h_ws = wb_e[h_nom]
+                        if hasattr(h_ws, "_charts") and len(h_ws._charts) > 0:
+                            graficos_incrustados.append(f"{h_nom} ({len(h_ws._charts)} gráfico(s))")
+
+                    if graficos_incrustados:
+                        res_hoja.detalles.append(
+                            f"❌ Hoja de gráfico '{nom_p}' no encontrada como ChartSheet independiente. "
+                            f"Se detectó que el gráfico fue dejado incrustado en: {', '.join(graficos_incrustados)}. "
+                            f"La plantilla exige Mover Gráfico a una hoja nueva. No se otorgan puntos para este gráfico."
+                        )
+                    else:
+                        res_hoja.detalles.append(
+                            f"❌ Hoja de gráfico '{nom_p}' no encontrada. Debe crear el gráfico y moverlo a una hoja nueva (ChartSheet)."
+                        )
+                else:
+                    res_hoja.detalles.append(f"Hoja '{nom_p}' no encontrada en el trabajo del estudiante.")
+
                 total_errores_general += 1
                 res_est.detalle_hojas.append(res_hoja)
                 continue
-
-            ws_p = wb_p[nom_p]
-            ws_e = wb_e[nom_e]
 
             # 0. Detección de Hojas de Gráfico independientes (Chartsheet)
             is_chartsheet_p = not hasattr(ws_p, "max_row") or not hasattr(ws_p, "cell")
@@ -232,13 +256,13 @@ class MirrorEvaluator(BaseEvaluator):
                     res_hoja.aciertos = 0
                     res_hoja.errores = 1
                     res_hoja.porcentaje = 0.0
-                    res_hoja.detalles.append(f"La hoja '{nom_p}' debe ser una Hoja de Gráfico independiente (Mover Gráfico > Hoja nueva), pero se encontró como hoja normal.")
+                    res_hoja.detalles.append(f"❌ La hoja '{nom_p}' debe ser una Hoja de Gráfico independiente (Mover Gráfico > En una hoja nueva), pero se encontró como hoja normal. No se otorgan los puntos de esta opción.")
                     total_errores_general += 1
                 else:
                     res_hoja.aciertos = 0
                     res_hoja.errores = 1
                     res_hoja.porcentaje = 0.0
-                    res_hoja.detalles.append(f"La hoja '{nom_e}' es una Hoja de Gráfico independiente cuando se esperaba una hoja de cálculo estándar.")
+                    res_hoja.detalles.append(f"❌ La hoja '{nom_e}' es una Hoja de Gráfico independiente cuando se esperaba una hoja de cálculo estándar.")
                     total_errores_general += 1
 
                 res_est.detalle_hojas.append(res_hoja)
@@ -284,6 +308,16 @@ class MirrorEvaluator(BaseEvaluator):
                 errores_hoja += 1
                 res_hoja.detalles.append(f"Falta combinar rango '{fm}'")
 
+            # 4. Verificar si se dejó un gráfico incrustado en la hoja normal cuando no debía
+            charts_p = getattr(ws_p, "_charts", [])
+            charts_e = getattr(ws_e, "_charts", [])
+            if len(charts_p) == 0 and len(charts_e) > 0:
+                errores_hoja += 1
+                res_hoja.detalles.append(
+                    f"⚠️ Se detectó {len(charts_e)} gráfico(s) incrustado(s) en la hoja de tabla dinámica '{nom_e}'. "
+                    f"Los gráficos deben colocarse en Hoja nueva (ChartSheet), no sobre la tabla dinámica."
+                )
+
             tot_eval = aciertos_hoja + errores_hoja
             pct = (aciertos_hoja / tot_eval * 100.0) if tot_eval > 0 else 0.0
 
@@ -295,7 +329,7 @@ class MirrorEvaluator(BaseEvaluator):
             total_errores_general += errores_hoja
             res_est.detalle_hojas.append(res_hoja)
 
-        # 4. Inspección profunda COM si aplica
+        # 5. Inspección profunda COM si aplica
         if COM_DISPONIBLE:
             try:
                 err_com, det_com = comparar_pivots_y_graficos_com(ruta_plantilla, ruta_estudiante, mapa_hojas)
@@ -304,12 +338,16 @@ class MirrorEvaluator(BaseEvaluator):
             except Exception as e:
                 res_est.advertencias.append(f"Error en validación COM: {e}")
 
-        # Totales
-        gran_total = total_aciertos_general + total_errores_general
+        # Totales: Promedio ponderado equitativo de las hojas evaluadas
+        if res_est.detalle_hojas:
+            pct_global = sum(h.porcentaje for h in res_est.detalle_hojas) / len(res_est.detalle_hojas)
+        else:
+            pct_global = 0.0
+
+        pct_global = round(pct_global, 2)
         res_est.total_aciertos = total_aciertos_general
         res_est.total_errores = total_errores_general
         res_est.puntos_totales = 100.0
-        pct_global = (total_aciertos_general / gran_total * 100.0) if gran_total > 0 else 0.0
         res_est.puntos_obtenidos = pct_global
         res_est.nota_final_100 = pct_global
         res_est.aprobado = pct_global >= 70.0
