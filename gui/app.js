@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputTrabajos = document.getElementById("trabajos-path");
     const plantillaHint = document.getElementById("plantilla-hint");
     const trabajosHint = document.getElementById("trabajos-hint");
+    const btnReloadRubric = document.getElementById("btn-reload-rubric");
     const btnBrowseFile = document.getElementById("btn-browse-file");
     const btnBrowseFolder = document.getElementById("btn-browse-folder");
     const btnGenTemplate = document.getElementById("btn-gen-template");
@@ -276,10 +277,35 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     });
 
+    // Botón Recargar Rúbrica tras editar en Excel (Ctrl+S)
+    if (btnReloadRubric) {
+        btnReloadRubric.addEventListener("click", () => {
+            const path = inputPlantilla.value.trim();
+            if (!path) {
+                showToast("Selecciona primero un archivo de plantilla.", "warning");
+                return;
+            }
+            btnReloadRubric.classList.add("spinning");
+            inspectRubric(path);
+            showToast("Actualizando criterios desde Excel...", "info");
+            setTimeout(() => {
+                btnReloadRubric.classList.remove("spinning");
+            }, 700);
+        });
+    }
+
     btnGenTemplate.addEventListener("click", () => {
         if (isRunning) return;
+
+        const confirmar = confirm(
+            "¿Deseas crear una nueva plantilla de demostración en la carpeta PLANTILLAS/?\n\n" +
+            "• Esto creará un nuevo archivo con hojas 'Ventas', 'Resumen' y '_RUBRICA'.\n" +
+            "• Tus archivos existentes NO serán sobreescritos."
+        );
+        if (!confirmar) return;
+
         btnGenTemplate.disabled = true;
-        btnGenTemplate.innerHTML = `<span>⏳</span> Generando...`;
+        btnGenTemplate.innerHTML = `<span>⏳</span> Creando...`;
 
         fetch("/api/generate-rubric-template")
             .then(res => res.json())
@@ -290,8 +316,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         btnModoB.click();
                     }
                     setPathInput(inputPlantilla, data.path, plantillaHint);
-                    showToast("¡Plantilla creada en PLANTILLAS/! Revisa la hoja _RUBRICA o la tabla abajo.", "success");
-                    appendTerminalLine(`Plantilla generada con éxito: ${data.path}. Contiene hoja _RUBRICA lista para personalizar.`, "success");
+                    showToast("¡Plantilla de demostración creada exitosamente!", "success");
+                    appendTerminalLine(`Plantilla generada con éxito: ${data.path}. Contiene hoja _RUBRICA con 8 criterios de ejemplo.`, "success");
                     inspectRubric(data.path);
                 } else {
                     showToast(data.message || "Error al crear plantilla.", "error");
@@ -302,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .finally(() => {
                 btnGenTemplate.disabled = false;
-                btnGenTemplate.innerHTML = `<span>✨</span> Generar Plantilla de Rúbrica (.xlsx)`;
+                btnGenTemplate.innerHTML = `<span>📄</span> Crear Plantilla de Demostración (.xlsx)`;
             });
     });
 

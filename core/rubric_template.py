@@ -22,14 +22,24 @@ from core.config import (
 )
 
 
-def generar_plantilla_rubrica(ruta_salida: str = None) -> str:
+def generar_plantilla_rubrica(ruta_salida: str = None, sobrescribir: bool = False) -> str:
     """
-    Genera el archivo PLANTILLA_RUBRICA_EJEMPLO.xlsx con hojas 'Ventas', 'Resumen'
+    Genera el archivo de plantilla de ejemplo con hojas 'Ventas', 'Resumen'
     y la hoja '_RUBRICA' con 100 puntos distribuidos en 8 criterios prácticos.
+    Si ya existe un archivo con ese nombre, genera uno nuevo con sufijo numérico
+    para proteger el trabajo previo del docente.
     """
     if not ruta_salida:
         os.makedirs(PLANTILLAS_DIR, exist_ok=True)
-        ruta_salida = os.path.join(PLANTILLAS_DIR, "PLANTILLA_RUBRICA_EJEMPLO.xlsx")
+        ruta_base = os.path.join(PLANTILLAS_DIR, "PLANTILLA_RUBRICA_EJEMPLO.xlsx")
+        if not sobrescribir and os.path.exists(ruta_base):
+            base, ext = os.path.splitext(ruta_base)
+            idx = 1
+            while os.path.exists(f"{base}_{idx}{ext}"):
+                idx += 1
+            ruta_salida = f"{base}_{idx}{ext}"
+        else:
+            ruta_salida = ruta_base
 
     wb = openpyxl.Workbook()
 

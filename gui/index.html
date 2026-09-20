@@ -71,8 +71,8 @@
 
                 <div class="card-header" style="margin-top: 1.5rem;">
                     <h2><span class="step-num">2</span> Selección de Archivos</h2>
-                    <button type="button" class="secondary-btn" id="btn-gen-template" title="Crear un archivo Excel de ejemplo con hoja _RUBRICA">
-                        <span>✨</span> Generar Plantilla de Rúbrica (.xlsx)
+                    <button type="button" class="secondary-btn" id="btn-gen-template" title="Crear un archivo nuevo de demostración con hoja _RUBRICA (no modifica tus archivos existentes)">
+                        <span>📄</span> Crear Plantilla de Demostración (.xlsx)
                     </button>
                 </div>
 
@@ -82,6 +82,13 @@
                         <label for="plantilla-path">Plantilla de Referencia (.xlsx)</label>
                         <div class="input-action-row">
                             <input type="text" id="plantilla-path" class="path-input" placeholder="Selecciona el archivo de plantilla..." readonly>
+                            <button type="button" class="browse-icon-btn" id="btn-reload-rubric" title="Recargar / Actualizar criterios desde Excel tras guardar (Ctrl+S)" aria-label="Actualizar rúbrica">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                            </button>
                             <button type="button" class="browse-icon-btn" id="btn-browse-file" title="Seleccionar archivo de Plantilla (.xlsx)" aria-label="Seleccionar archivo">
                                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -91,7 +98,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <small class="field-hint" id="plantilla-hint">Busca hoja <code>_RUBRICA</code> o archivo <code>.rubrica.json</code></small>
+                        <small class="field-hint" id="plantilla-hint">Busca hoja <code>_RUBRICA</code> o archivo <code>.rubrica.json</code>. Si editas en Excel, guarda (Ctrl+S) y pulsa 🔄 Actualizar</small>
                     </div>
 
                     <div class="form-group">

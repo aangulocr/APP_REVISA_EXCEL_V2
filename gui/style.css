@@ -438,6 +438,15 @@ input[type="text"][readonly] {
     transform: none;
 }
 
+.spinning svg {
+    animation: spin-anim 0.7s linear infinite;
+}
+
+@keyframes spin-anim {
+    100% { transform: rotate(360deg); }
+}
+
+
 [data-theme="light"] .browse-icon-btn {
     background: rgba(99, 102, 241, 0.08);
     border-color: rgba(0, 0, 0, 0.15);
