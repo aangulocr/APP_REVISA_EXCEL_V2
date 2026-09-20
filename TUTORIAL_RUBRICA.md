@@ -163,6 +163,40 @@ Se define en la hoja `_RUBRICA` de la siguiente forma:
 
 ---
 
+### Ejemplo Específico: Operaciones Combinadas (con y sin funciones)
+
+#### Caso 1: Operación Combinada Directa en una Celda (sin funciones)
+> **Ejercicio:** *"En la celda `G3`, calcule el total con descuento aplicando la fórmula: `= D3 * E3 - D3 * E3 * 2%`"*
+
+En la hoja `_RUBRICA` se define así:
+
+| ID | CRITERIO | HOJA | RANGO | TIPO_VALIDACION | PARAMETROS | PUNTOS | OBLIGATORIO |
+| :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
+| **CRIT_04** | Calcular total con 2% de descuento usando operación combinada | `Ventas` | `G3` | `formula` | `{"referencias": ["D3", "E3"], "contiene": ["2%/0.02"]}` | 15 | `SI` |
+
+**¿Por qué se configura así?**
+- **`TIPO_VALIDACION`: `formula`:** Exige que el alumno escriba una fórmula que empiece con `=`, no un número estático.
+- **`"referencias": ["D3", "E3"]`:** Valida que el estudiante use las celdas de Precio y Cantidad (`D3` y `E3`).
+- **`"contiene": ["2%/0.02"]`:** Verifica que aplique el descuento del 2%, aceptando tanto si el alumno escribe `2%` como si escribe `0.02` (o `0,02`).
+
+---
+
+#### Caso 2: Operación Combinada DENTRO de un `SI` o `SI.CONJUNTO`
+> **Ejercicio:** *"En la celda `F3`, si el cargo en `D3` es 'JEFE', aplique el cálculo: `=SI.CONJUNTO(D3="JEFE"; C3 * E3 - C3 * E3 * 5%; ...)`"*
+
+En la hoja `_RUBRICA` se define así:
+
+| ID | CRITERIO | HOJA | RANGO | TIPO_VALIDACION | PARAMETROS | PUNTOS | OBLIGATORIO |
+| :--- | :--- | :--- | :---: | :--- | :--- | :---: | :---: |
+| **CRIT_05** | Calcular bono condicional con SI.CONJUNTO y operación combinada | `Ventas` | `F3` | `formula` | `{"funciones": ["SI.CONJUNTO"], "referencias": ["D3", "C3", "E3"], "contiene": ["JEFE", "5%/0.05"]}` | 20 | `SI` |
+
+**¿Por qué se configura así?**
+1. **`"funciones": ["SI.CONJUNTO"]`:** Verifica que use la función requerida (acepta `SI.CONJUNTO` en español o `IFS` en inglés).
+2. **`"referencias": ["D3", "C3", "E3"]`:** Comprueba que evalúe la celda condicional `D3` y calcule con `C3` y `E3`.
+3. **`"contiene": ["JEFE", "5%/0.05"]`:** Valida que compare contra el texto `"JEFE"` y que aplique el porcentaje `5%` o `0.05`.
+
+---
+
 ## 6. Reglas de Oro para la Hoja `_RUBRICA`
 
 1. **Puntaje total exacto:** La suma de la columna `PUNTOS` debe ser `100.0`. En la interfaz web aparecerá un distintivo verde confirmando el total.

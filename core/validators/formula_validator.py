@@ -148,6 +148,29 @@ class FormulaValidator(BaseValidator):
                     fallos.append(f"Celda {coord}: no referencia el rango/celda '{', '.join(refs_faltantes)}'")
                     continue
 
+            # 5. Verificar fragmentos, operadores o textos requeridos (ej: "JEFE", "5%/0.05", etc.)
+            contiene_req = params.get("contiene", params.get("fragmentos", []))
+            if isinstance(contiene_req, str):
+                contiene_req = [contiene_req]
+
+            faltantes_contiene = []
+            formula_limpia = formula_raw.upper().replace(" ", "")
+            for elemento in contiene_req:
+                if isinstance(elemento, (list, tuple)):
+                    opciones = [str(o).strip().upper().replace(" ", "") for o in elemento]
+                elif "/" in str(elemento):
+                    opciones = [str(o).strip().upper().replace(" ", "") for o in str(elemento).split("/")]
+                else:
+                    opciones = [str(elemento).strip().upper().replace(" ", "")]
+
+                if not any(opt in formula_limpia for opt in opciones):
+                    faltantes_contiene.append(str(elemento))
+
+            if faltantes_contiene:
+                celdas_erroneas.append(coord)
+                fallos.append(f"Celda {coord}: la fórmula no contiene el cálculo o elemento requerido ({', '.join(faltantes_contiene)})")
+                continue
+
         aprobado = len(fallos) == 0
         puntos = criterio.puntos if aprobado else 0.0
         mensaje = "Fórmula correcta." if aprobado else "; ".join(fallos[:3])
