@@ -23,6 +23,8 @@ from core.config import (
     SUFIJO_ARCHIVO_RUBRICA,
     ARCHIVO_RUBRICA_GLOBAL,
     VALIDADORES_DISPONIBLES,
+    FUNCIONES_ES_A_EN,
+    FUNCIONES_EN_A_ES,
 )
 from core.sheet_matcher import es_rubrica, normalizar_texto
 
@@ -147,27 +149,37 @@ def parsear_rubrica_desde_hoja(ws) -> Tuple[List[CriterioRubrica], float, List[s
         rango = str(rango_val).strip().upper() if rango_val else ""
 
         tipo_val = ws.cell(row=r, column=col_map.get("tipo_validacion", 5)).value
+        tipo_val_str = str(tipo_val).strip().upper() if tipo_val else ""
         tipo_str = normalizar_texto(str(tipo_val)) if tipo_val else "valor_exacto"
-        # Normalizar nombres comunes
-        if tipo_str in ("formula", "fórmulas", "formulas"):
+
+        # 1. Parsear parámetros primero para permitir inyección automática
+        params_raw = ws.cell(row=r, column=col_map.get("parametros", 6)).value if "parametros" in col_map else "{}"
+        params_dict = _limpiar_json_str(params_raw)
+
+        # 2. Normalizar nombres comunes y sinónimos en español e inglés
+        if tipo_str in ("formula", "fórmulas", "formulas", "funcion", "funciones", "function", "functions"):
             tipo_str = "formula_flexible"
-        elif tipo_str in ("valor", "numero", "número", "numerico", "numérico"):
+        elif tipo_str in ("valor", "numero", "número", "numerico", "numérico", "resultado"):
             tipo_str = "valor_numerico"
-        elif tipo_str in ("formato", "format"):
+        elif tipo_str in ("formato", "format", "moneda", "porcentaje", "fecha"):
             tipo_str = "formato_numero"
-        elif tipo_str in ("estilo", "diseno", "diseño", "visual"):
+        elif tipo_str in ("estilo", "diseno", "diseño", "visual", "color", "borde", "negrita"):
             tipo_str = "estilo_visual_flexible"
-        elif tipo_str in ("pivot", "td", "tabladinamica"):
+        elif tipo_str in ("pivot", "td", "tabladinamica", "tabla_dinamica"):
             tipo_str = "tabla_dinamica"
-        elif tipo_str in ("merge", "combinadas", "combinar"):
+        elif tipo_str in ("merge", "combinadas", "combinar", "celdas_combinadas"):
             tipo_str = "celdas_combinadas"
-        elif tipo_str in ("validacion", "lista", "val_datos"):
+        elif tipo_str in ("validacion", "lista", "val_datos", "validacion_datos"):
             tipo_str = "validacion_datos"
         elif tipo_str in ("grafico", "graficos", "graficodinamico", "grafico_dinamico", "chart", "chartsheet", "hojagrafico", "hoja_grafico"):
             tipo_str = "grafico_dinamico"
-
-        params_raw = ws.cell(row=r, column=col_map.get("parametros", 6)).value if "parametros" in col_map else "{}"
-        params_dict = _limpiar_json_str(params_raw)
+        elif tipo_str in ("tabla", "tablas", "table", "tabla_oficial", "listobject"):
+            tipo_str = "tabla"
+        elif tipo_val_str in FUNCIONES_ES_A_EN or tipo_val_str in FUNCIONES_EN_A_ES:
+            # Si el usuario colocó directamente el nombre de una función (ej: "SI.CONJUNTO", "SUMA", "BUSCARV")
+            tipo_str = "formula_flexible"
+            if "funciones" not in params_dict:
+                params_dict["funciones"] = [tipo_val_str]
 
         puntos_val = ws.cell(row=r, column=col_map.get("puntos", 7)).value if "puntos" in col_map else 10.0
         try:

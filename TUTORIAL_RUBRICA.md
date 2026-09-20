@@ -85,19 +85,60 @@ Puedes combinar cualquiera de estas claves en la columna **`PARAMETROS`**:
 
 ---
 
-## 5. Catálogo de Tipos de Validación Disponibles en el Modo B
+## 5. ¿Cómo Saber Qué Poner en `TIPO_VALIDACION`? (Guía de Decisión)
 
-| Tipo de Validación | Descripción | Ejemplo de Parámetros |
+Para saber qué escribir en la columna **`TIPO_VALIDACION`**, hazte esta pregunta simple: **¿Qué le estás pidiendo al estudiante que haga?**
+
+| Si en el ejercicio pides... | En `TIPO_VALIDACION` pones: | ¿Qué puedes poner en `PARAMETROS`? |
 | :--- | :--- | :--- |
-| `formula` / `formula_flexible` | Valida fórmulas semánticas bilingües (ES/EN) y referencias requeridas | `{"funciones": ["SUMA", "SUM"], "referencias": ["C2:C20"]}` |
-| `valor` / `valor_numerico` | Valida resultados calculados con margen de tolerancia | `{"valor": 1500.50, "tolerancia": 0.01}` |
-| `formato` / `formato_numero` | Valida formato de Moneda, Porcentaje, Fecha, etc. | `{"formato": "moneda"}` o `{"formato": "porcentaje"}` |
-| `estilo` / `estilo_visual_flexible` | Valida negrita, bordes o color de fondo | `{"requiere_negrita": true, "requiere_bordes": true}` |
-| `tabla_dinamica` | Valida existencia y campos de tablas dinámicas | `{"campos_fila": ["Categoria"], "campos_valor": ["Total"]}` |
-| `grafico_dinamico` | Valida Gráfico Dinámico y Hoja de Gráfico (`ChartSheet`) movida | `{"tipo_hoja": "chartsheet", "origen": "Resumen_Ventas"}` |
-| `tabla` | Valida objeto Tabla oficial y su nombre | `{"nombre": "TablaVentas"}` |
-| `celdas_combinadas` | Valida que el rango esté combinado | `{}` |
-| `validacion_datos` | Valida listas desplegables o reglas de celda | `{"tipo": "list"}` |
+| **Calcular con una fórmula o función** (ej: `=SI.CONJUNTO(...)`, `=SUMA(...)`, `=BUSCARV(...)`) | **`formula`** *(o **`funcion`**)* | `{"funciones": ["SI.CONJUNTO"]}` o `{"formula": "=..."}` |
+| **Directamente el nombre de la función** | **`SI.CONJUNTO`** *(o `SUMA`, `BUSCARV`)* | `{}` *(¡El sistema lo detecta automáticamente!)* |
+| **Que la celda dé un número o texto específico** (el resultado final) | **`valor`** | `{"valor": 5000, "tolerancia": 0.01}` |
+| **Formato visual de moneda, porcentaje o fecha** (`$`, `₡`, `%`) | **`formato`** | `{"formato": "moneda"}` o `{"formato": "porcentaje"}` |
+| **Negrita, color de celda o bordes** | **`estilo`** | `{"requiere_negrita": true, "requiere_relleno": true}` |
+| **Una Tabla Dinámica** | **`tabla_dinamica`** | `{"campos_fila": ["Cat"], "campos_valor": ["Total"]}` |
+| **Un Gráfico Dinámico o Hoja de Gráfico** | **`grafico_dinamico`** *(o `grafico`)* | `{"tipo_hoja": "chartsheet", "origen": "Resumen"}` |
+| **Convertir datos en Tabla oficial de Excel** | **`tabla`** | `{"nombre": "TablaVentas"}` |
+| **Combinar celdas** | **`celdas_combinadas`** | `{}` |
+| **Una lista desplegable de validación** | **`validacion_datos`** | `{"tipo": "list"}` |
+
+---
+
+### Caso Especial: ¿Cómo evaluar funciones como `SI.CONJUNTO`?
+
+Tienes **3 formas fáciles** de escribirlo en la hoja `_RUBRICA`, y el evaluador entenderá las 3 automáticamente:
+
+#### Forma 1: Usando `formula` (Recomendada)
+- **`TIPO_VALIDACION`:** `formula`
+- **`PARAMETROS`:** `{"funciones": ["SI.CONJUNTO"]}`
+
+#### Forma 2: Usando la palabra `funcion`
+- **`TIPO_VALIDACION`:** `funcion`
+- **`PARAMETROS`:** `{"funciones": ["SI.CONJUNTO"]}`
+
+#### Forma 3: Escribiendo directamente el nombre de la función
+- **`TIPO_VALIDACION`:** `SI.CONJUNTO`
+- **`PARAMETROS`:** `{}`
+*(El auditor reconoce automáticamente que `SI.CONJUNTO` es una función de Excel y la evaluará sin necesidad de configurar nada más).*
+
+> 🌐 **Soporte Bilingüe Automático:** Si el estudiante tiene su Excel en inglés y utiliza `=IFS(...)`, el sistema lo traduce y lo califica como **100% correcto** automáticamente.
+
+---
+
+### Catálogo Completo de Tipos de Validación Soportados
+
+| Tipo de Validación | Sinónimos Aceptados | Qué Verifica |
+| :--- | :--- | :--- |
+| `formula_flexible` | `formula`, `formulas`, `funcion`, `funciones` o nombre de función (`SUMA`, `SI.CONJUNTO`, `BUSCARV`) | Sintaxis semántica, función utilizada y referencias requeridas. |
+| `valor_numerico` | `valor`, `numero`, `resultado` | Resultado final numérico o textual con tolerancia. |
+| `formato_numero` | `formato`, `moneda`, `porcentaje`, `fecha` | Detección agnóstica de símbolo de moneda, porcentajes o fechas. |
+| `estilo_visual_flexible` | `estilo`, `diseno`, `visual`, `negrita`, `color` | Presencia de negrita, relleno y bordes. |
+| `tabla_dinamica` | `tabla_dinamica`, `pivot`, `td` | Presencia y campos de la Tabla Dinámica. |
+| `grafico_dinamico` | `grafico_dinamico`, `grafico`, `chart`, `chartsheet` | Existencia del gráfico y si fue movido a hoja nueva (`ChartSheet`). |
+| `tabla` | `tabla`, `tabla_oficial`, `table` | Objeto tabla estructurada y su nombre asignado. |
+| `celdas_combinadas` | `celdas_combinadas`, `combinadas`, `merge` | Rango de celdas combinadas. |
+| `validacion_datos` | `validacion_datos`, `lista`, `validacion` | Reglas de validación de celda o listas desplegables. |
+
 
 ---
 
