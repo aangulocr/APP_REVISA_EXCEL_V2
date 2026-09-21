@@ -26,7 +26,12 @@ from core.config import (
 from core.models import ModoEvaluacion, ResultadoEstudiante
 from core.rubric_parser import cargar_rubrica
 from core.evaluators import MirrorEvaluator, RubricEvaluator
-from core.report_generator import exportar_csv, exportar_json_detallado, exportar_excel_log
+from core.report_generator import (
+    exportar_csv,
+    exportar_json_detallado,
+    exportar_excel_log,
+    exportar_observaciones_txt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +169,13 @@ def auditar_lote(
     exportar_excel_log(resultados, ruta_xlsx_fecha, seccion=seccion)
     logger.info(f"Reporte Excel generado en: {ruta_xlsx_fija}")
 
+    # Reporte de Observaciones en Texto (para copiar y pegar fácilmente)
+    ruta_obs_fija = os.path.join(carpeta_logs, "OBSERVACIONES_ESTUDIANTES.txt")
+    ruta_obs_fecha = os.path.join(carpeta_logs, f"{seccion}_OBSERVACIONES_{fecha_str}.txt")
+    exportar_observaciones_txt(resultados, ruta_obs_fija, seccion=seccion)
+    exportar_observaciones_txt(resultados, ruta_obs_fecha, seccion=seccion)
+    logger.info(f"Reporte de Observaciones en texto generado en: {ruta_obs_fija}")
+
     if callback_progreso:
         callback_progreso({
             "evento": "completado",
@@ -171,6 +183,7 @@ def auditar_lote(
             "reporte_csv": ruta_csv,
             "reporte_json": ruta_json,
             "reporte_xlsx": ruta_xlsx_fija,
+            "reporte_obs_txt": ruta_obs_fija,
         })
 
     logger.info("=== AUDITORÍA COMPLETADA CON ÉXITO ===")

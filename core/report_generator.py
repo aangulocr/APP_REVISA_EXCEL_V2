@@ -30,6 +30,90 @@ from core.config import (
 logger = logging.getLogger(__name__)
 
 
+def generar_observaciones_estudiante(res: ResultadoEstudiante) -> str:
+    """
+    Genera un texto consolidado con todos los fallos, penalizaciones y justificaciones
+    de la nota obtenida por el estudiante tanto en Modo A como en Modo B.
+    """
+    lineas = []
+
+    # 1. Modo B: Criterios fallados
+    if res.criterios_fallados:
+        for cf in res.criterios_fallados:
+            lineas.append(f"• [Criterio Fallado]: {cf}")
+
+    # 2. Modo A: Hojas con errores o penalizaciones
+    if res.detalle_hojas:
+        for h in res.detalle_hojas:
+            pct = h.porcentaje if h.porcentaje is not None else 0.0
+            if h.errores > 0 or pct < 100.0:
+                if h.detalles:
+                    for d in h.detalles:
+                        lineas.append(f"• [{h.hoja} - {pct:.1f}%]: {d}")
+                else:
+                    lineas.append(f"• [{h.hoja} - {pct:.1f}%]: {h.errores} error(es) detectado(s)")
+            elif h.detalles:
+                # Advertencias menores aunque no baje puntos (ej: gráficos incrustados)
+                for d in h.detalles:
+                    if "⚠️" in d or "aviso" in d.lower() or "incrustado" in d.lower():
+                        lineas.append(f"• [{h.hoja}]: {d}")
+
+    # 3. Validación COM profunda
+    if res.errores_com:
+        for ec in res.errores_com:
+            lineas.append(f"• [Validación COM]: {ec}")
+
+    # 4. Advertencias globales (desplazamientos, etc.)
+    if res.advertencias:
+        for adv in res.advertencias:
+            lineas.append(f"• [Advertencia]: {adv}")
+
+    if not lineas:
+        return "Trabajo perfecto. Cumplió todos los requisitos al 100%."
+
+    return "\n".join(lineas)
+
+
+def exportar_observaciones_txt(
+    resultados: List[ResultadoEstudiante],
+    ruta_txt: str,
+    seccion: str = "SEC_DEFAULT"
+) -> str:
+    """
+    Genera un archivo de texto plano con la retroalimentación individual
+    de cada estudiante, ideal para copiar y pegar en Teams, Classroom, Moodle o correo.
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(ruta_txt)), exist_ok=True)
+    fecha_hoy = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    with open(ruta_txt, "w", encoding="utf-8") as f:
+        f.write("=" * 80 + "\n")
+        f.write("REPORTE DE OBSERVACIONES Y JUSTIFICACIÓN DE NOTAS\n")
+        f.write(f"Fecha: {fecha_hoy} | Sección: {seccion} | Total Estudiantes: {len(resultados)}\n")
+        f.write("=" * 80 + "\n\n")
+
+        for res in resultados:
+            estado_str = "APROBADO" if res.aprobado else "REPROBADO"
+            f.write("-" * 80 + "\n")
+            f.write(f"ESTUDIANTE: {res.nombre_estudiante}\n")
+            f.write(f"ARCHIVO   : {res.archivo}\n")
+            f.write(f"NOTA FINAL: {res.nota_final_100:.2f} / 100.0  [{estado_str}]\n")
+            f.write("-" * 80 + "\n")
+            f.write("OBSERVACIONES Y FALLOS DETECTADOS:\n")
+
+            obs_txt = generar_observaciones_estudiante(res)
+            for linea in obs_txt.split("\n"):
+                f.write(f"  {linea}\n")
+
+            f.write("\n")
+
+        f.write("=" * 80 + "\n")
+        f.write("FIN DEL REPORTE DE OBSERVACIONES\n")
+        f.write("=" * 80 + "\n")
+
+    return ruta_txt
+
+
 def exportar_csv(
     resultados: List[ResultadoEstudiante],
     ruta_csv: str
@@ -47,6 +131,7 @@ def exportar_csv(
         "Estado",
         "Criterios_Fallados",
         "Advertencias",
+        "Observaciones_Justificacion",
     ]
 
     with open(ruta_csv, "w", newline="", encoding="utf-8-sig") as f:
@@ -57,6 +142,7 @@ def exportar_csv(
             estado = "Aprobado" if res.aprobado else "Reprobado"
             crit_fallados_str = " | ".join(res.criterios_fallados) if res.criterios_fallados else "Ninguno"
             advs_str = " | ".join(res.advertencias) if res.advertencias else "Ninguna"
+            obs_str = generar_observaciones_estudiante(res).replace("\n", " | ")
 
             writer.writerow([
                 res.archivo,
@@ -68,6 +154,7 @@ def exportar_csv(
                 estado,
                 crit_fallados_str,
                 advs_str,
+                obs_str,
             ])
 
     return ruta_csv
@@ -141,7 +228,7 @@ def exportar_excel_log(
         "Puntos Máximos",
         "Nota Final (0-100)",
         "Estado",
-        "Criterios / Errores Fallados",
+        "OBSERVACIONES / JUSTIFICACIÓN DE NOTA",
         "Advertencias / Desplazamientos"
     ]
 
@@ -153,7 +240,7 @@ def exportar_excel_log(
         c.alignment = align_center
         c.border = thin_border
 
-    # Escribir filas
+    # Escribir filas de resumen
     fecha_hoy = datetime.now().strftime("%d/%m/%Y")
     for r_idx, res in enumerate(resultados, 2):
         ws_resumen.cell(row=r_idx, column=1, value=fecha_hoy).alignment = align_center
@@ -185,17 +272,76 @@ def exportar_excel_log(
             c_estado.font = font_reprob
             c_nota.font = font_reprob
 
-        # Fallos y Advertencias
-        fallos_txt = " | ".join(res.criterios_fallados) if res.criterios_fallados else "Ninguno"
-        advs_txt = " | ".join(res.advertencias) if res.advertencias else ""
+        # Observaciones y Justificación
+        obs_txt = generar_observaciones_estudiante(res)
+        c_obs = ws_resumen.cell(row=r_idx, column=9, value=obs_txt)
+        c_obs.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
-        ws_resumen.cell(row=r_idx, column=9, value=fallos_txt).alignment = align_left
-        ws_resumen.cell(row=r_idx, column=10, value=advs_txt).alignment = align_left
+        advs_txt = " | ".join(res.advertencias) if res.advertencias else ""
+        c_adv = ws_resumen.cell(row=r_idx, column=10, value=advs_txt)
+        c_adv.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
         for c_i in range(1, len(encabezados) + 1):
             ws_resumen.cell(row=r_idx, column=c_i).border = thin_border
 
-    # 2. Hoja Adicional: Detalle por Criterio si aplica (Modo B)
+    # 2. Hoja Adicional: Desglose por Hojas para Modo A
+    tiene_detalle_hojas = any(len(r.detalle_hojas) > 0 for r in resultados)
+    if tiene_detalle_hojas:
+        ws_hojas = wb.create_sheet(title="Desglose por Hojas")
+        headers_hojas = [
+            "Estudiante",
+            "Archivo",
+            "Hoja Plantilla",
+            "Hoja Estudiante",
+            "Estado Hoja",
+            "% Acierto",
+            "Aciertos",
+            "Errores",
+            "Observaciones del Fallo"
+        ]
+        ws_hojas.row_dimensions[1].height = 36
+        for c_idx, h in enumerate(headers_hojas, 1):
+            c = ws_hojas.cell(row=1, column=c_idx, value=h)
+            c.fill = header_fill
+            c.font = header_font
+            c.alignment = align_center
+            c.border = thin_border
+
+        fila_h = 2
+        for res in resultados:
+            for dh in res.detalle_hojas:
+                ws_hojas.cell(row=fila_h, column=1, value=res.nombre_estudiante).alignment = align_left
+                ws_hojas.cell(row=fila_h, column=2, value=res.archivo).alignment = align_left
+                ws_hojas.cell(row=fila_h, column=3, value=dh.hoja).alignment = align_left
+                ws_hojas.cell(row=fila_h, column=4, value=dh.hoja_estudiante or "(No encontrada)").alignment = align_left
+
+                aprob_hoja = (dh.porcentaje or 0.0) >= 70.0
+                c_est_h = ws_hojas.cell(row=fila_h, column=5, value="APROBADO" if aprob_hoja else "REPROBADO")
+                c_est_h.alignment = align_center
+                c_est_h.fill = fill_aprob if aprob_hoja else fill_reprob
+                c_est_h.font = font_aprob if aprob_hoja else font_reprob
+
+                c_pct = ws_hojas.cell(row=fila_h, column=6, value=(dh.porcentaje or 0.0) / 100.0)
+                c_pct.alignment = align_right
+                c_pct.number_format = '0.0%'
+                c_pct.font = font_aprob if aprob_hoja else font_reprob
+
+                c_ac = ws_hojas.cell(row=fila_h, column=7, value=dh.aciertos)
+                c_ac.alignment = align_right
+
+                c_er = ws_hojas.cell(row=fila_h, column=8, value=dh.errores)
+                c_er.alignment = align_right
+
+                det_str = " | ".join(dh.detalles) if dh.detalles else ("Hoja correcta" if (dh.porcentaje or 0.0) == 100.0 else "")
+                c_det = ws_hojas.cell(row=fila_h, column=9, value=det_str)
+                c_det.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+                for col_k in range(1, len(headers_hojas) + 1):
+                    ws_hojas.cell(row=fila_h, column=col_k).border = thin_border
+
+                fila_h += 1
+
+    # 3. Hoja Adicional: Detalle por Criterio si aplica (Modo B)
     es_modo_b = any(len(r.criterios_evaluados) > 0 for r in resultados)
     if es_modo_b:
         ws_crit = wb.create_sheet(title="Matriz de Criterios")
@@ -218,7 +364,6 @@ def exportar_excel_log(
 
         for r_idx, res in enumerate(resultados, 2):
             ws_crit.cell(row=r_idx, column=1, value=res.nombre_estudiante).border = thin_border
-            # Buscar cada criterio
             mapa_ce = {ce.criterio_id: ce for ce in res.criterios_evaluados}
             for c_idx, crit_id in enumerate(todos_crit_ids, 2):
                 cel = ws_crit.cell(row=r_idx, column=c_idx)
@@ -246,13 +391,22 @@ def exportar_excel_log(
     # Autoajuste de anchos de columnas
     for ws in wb.worksheets:
         for col in ws.columns:
-            max_len = 0
+            header_val = str(ws.cell(row=1, column=col[0].column).value or "").lower()
             col_letter = get_column_letter(col[0].column)
-            for cell in col:
-                val_str = str(cell.value or "")
-                if len(val_str) > max_len:
-                    max_len = min(len(val_str), 50)  # Límite para textos muy largos
-            ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+
+            if "observacion" in header_val or "justificacion" in header_val:
+                ws.column_dimensions[col_letter].width = 65
+            elif "archivo" in header_val:
+                ws.column_dimensions[col_letter].width = 32
+            elif "estudiante" in header_val or "hoja" in header_val:
+                ws.column_dimensions[col_letter].width = 28
+            else:
+                max_len = 0
+                for cell in col:
+                    val_str = str(cell.value or "")
+                    if len(val_str) > max_len:
+                        max_len = len(val_str)
+                ws.column_dimensions[col_letter].width = max(min(max_len + 3, 40), 12)
 
     wb.save(ruta_xlsx)
     wb.close()

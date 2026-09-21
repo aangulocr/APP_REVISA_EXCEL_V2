@@ -148,7 +148,8 @@ def comparar_pivots_y_graficos_com(
             charts_e = [wb_e.Charts(k).Name for k in range(1, wb_e.Charts.Count + 1)]
 
             for c_nom in charts_p:
-                if c_nom not in charts_e:
+                c_nom_mapped = mapa_hojas.get(c_nom, {}).get("hoja_estudiante") if mapa_hojas else None
+                if c_nom not in charts_e and (not c_nom_mapped or c_nom_mapped not in charts_e):
                     detalles.append(f"❌ Gráfico Dinámico faltante: hoja de gráfico '{c_nom}' no encontrada.")
                     errores += 1
 

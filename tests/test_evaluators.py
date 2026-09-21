@@ -11,7 +11,12 @@ import openpyxl
 
 from core.rubric_template import generar_plantilla_rubrica
 from core.evaluators import RubricEvaluator, MirrorEvaluator
-from core.report_generator import exportar_csv, exportar_json_detallado, exportar_excel_log
+from core.report_generator import (
+    exportar_csv,
+    exportar_json_detallado,
+    exportar_excel_log,
+    exportar_observaciones_txt,
+)
 
 
 @pytest.fixture
@@ -99,8 +104,20 @@ def test_report_generation(temp_environment):
     exportar_excel_log(resultados, xlsx_path)
     assert os.path.isfile(xlsx_path)
 
+    # Exportar Observaciones en texto plano
+    txt_obs_path = os.path.join(env["logs"], "OBSERVACIONES_ESTUDIANTES.txt")
+    exportar_observaciones_txt(resultados, txt_obs_path, seccion="11-1")
+    assert os.path.isfile(txt_obs_path)
+    with open(txt_obs_path, "r", encoding="utf-8") as f:
+        contenido_obs = f.read()
+        assert "OBSERVACIONES Y FALLOS DETECTADOS" in contenido_obs
+
     # Verificar contenido de Excel
     wb_log = openpyxl.load_workbook(xlsx_path)
     assert "Resumen General" in wb_log.sheetnames
     assert "Matriz de Criterios" in wb_log.sheetnames
+    ws_res = wb_log["Resumen General"]
+    # Columna 9 debe ser la de Observaciones
+    header_col9 = ws_res.cell(row=1, column=9).value
+    assert "OBSERVACIONES" in str(header_col9).upper()
     wb_log.close()
